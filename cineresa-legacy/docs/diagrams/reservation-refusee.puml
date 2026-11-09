@@ -1,0 +1,34 @@
+@startuml
+title Réservation — refus pour capacité insuffisante
+actor Client
+participant httpRouter as HTTP
+participant BookSeatsService as UC
+participant ScreeningRepository as REPO
+participant "IdGenerator / Clock" as SYS
+participant Screening as AGG
+participant domainErrorHandler as ERR
+Client -> HTTP : POST /screenings/s1/bookings\nemail valide, seats=5
+HTTP -> UC : execute(command)
+UC -> REPO : findById("s1")
+REPO --> UC : copie de Screening (4 places restantes)
+note over UC : new Email(...), new SeatCount(5), tarif NORMAL
+UC -> SYS : ids.next(), clock.now()
+SYS --> UC : bookingId, now
+UC -> AGG : book(request)
+alt demande > places restantes (5 > 4)
+  AGG --> UC : lève DomainError(CONFLICT, "Plus assez de places")
+  UC --> HTTP : promesse rejetée
+  HTTP -> ERR : next(error) via asyncHandler
+  ERR --> Client : HTTP 409\n{"error":"Plus assez de places"}
+  note over UC, AGG : aucun paiement, save ou publish pour cette demande
+else places suffisantes et séance future
+  AGG --> UC : Booking confirmé dans l'agrégat
+  note over UC : suite du succès hors périmètre du diagramme
+end
+legend bottom
+  Flèche pleine : appel ; pointillée : retour ou erreur propagée.
+  ScreeningRepository : port utilisé via InMemoryScreeningRepository.
+  IdGenerator / Clock : ports utilisés via UuidGenerator / SystemClock.
+  Préconditions : séance future, e-mail valide, nombre entre 1 et 6.
+endlegend
+@enduml

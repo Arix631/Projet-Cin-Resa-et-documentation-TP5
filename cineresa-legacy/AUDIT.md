@@ -1,0 +1,1 @@
+59 à 62 [capacity, - 1 à 6 places par réservation, dans la limite de la capacité de la salle, capacity, ]

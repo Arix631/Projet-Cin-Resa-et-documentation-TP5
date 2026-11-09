@@ -1,0 +1,54 @@
+@startuml
+title Réservation — dépendances vers les ports et le domaine
+left to right direction
+skinparam componentStyle uml2
+package "Entrée HTTP" {
+  component httpRouter as HTTP
+}
+package "Application" {
+  interface BookSeats as IN
+  component BookSeatsService as UC
+  interface ScreeningRepository as REPO
+  interface PaymentGateway as PAY
+  interface EventPublisher as BUS
+  interface Clock as CLOCK
+  interface IdGenerator as ID
+  component NotifyCustomer as HANDLER
+  interface Notifier as NOTIFY
+}
+package "Domaine" {
+  component "Screening / Booking\nSeatCount / Tariff / PricingPolicy\nEmail / Money / DomainError\nBookingConfirmed / BookingCancelled" as DOMAIN
+}
+package "Adaptateurs sortants" {
+  component InMemoryScreeningRepository as MEM
+  component FakePaymentGateway as FAKE
+  component InMemoryEventBus as EVENTS
+  component SystemClock as SYS
+  component UuidGenerator as UUID
+  component ConsoleNotifier as CONSOLE
+}
+HTTP ..> IN : dépend
+UC ..|> IN
+UC ..> REPO
+UC ..> PAY
+UC ..> BUS
+UC ..> CLOCK
+UC ..> ID
+UC ..> DOMAIN
+MEM ..|> REPO
+MEM ..> DOMAIN
+FAKE ..|> PAY
+EVENTS ..|> BUS
+EVENTS ..> DOMAIN
+SYS ..|> CLOCK
+UUID ..|> ID
+CONSOLE ..|> NOTIFY
+HANDLER ..> NOTIFY
+HANDLER ..> DOMAIN
+legend bottom
+  ..> : dépendance de code ; ..|> : réalisation d'interface
+  Ports et services : application ; règles : domaine.
+  container.ts assemble les objets et abonne NotifyCustomer au bus.
+  Périmètre : réservation et notification ; autres cas d'utilisation omis.
+endlegend
+@enduml
