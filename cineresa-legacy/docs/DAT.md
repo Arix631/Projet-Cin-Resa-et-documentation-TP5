@@ -1,5 +1,7 @@
 # Document d'architecture technique — CinéResa
 
+**Binôme :** Amine KEBAIER et Jules ASSANDRI
+
 
 
 ## 1. Contexte et objectifs
